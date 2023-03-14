@@ -1,7 +1,10 @@
 import requests
 import os
 import jwt
+
 from dotenv import load_dotenv
+from .my_db import add_user, get_user
+
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -65,3 +68,9 @@ def get_log(request):
     # location stats
     response = requests.get(f'https://api.intra.42.fr/v2/users/junkpark/locations_stats', headers={'Authorization': f'Bearer {access_token}'})
     return Response(response.json())
+
+@api_view(['GET'])
+def get_bears_user_info(request):
+    intra_id = request.GET.get('id', None)
+    return Response(get_user(intra_id))
+
