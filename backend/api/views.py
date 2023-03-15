@@ -13,7 +13,7 @@ load_dotenv()
 
 def decode_token(token):
     decoded = jwt.decode(token, os.getenv('CLIENT_SECRET'), algorithms=['HS256'])
-    return decoded['access_token'], decoded['refresh_token']
+    return decoded['access_token'], decoded['refresh_token'], decoded['login']
 
 def get_new_token(refresh_token):
     data = {
@@ -46,18 +46,22 @@ def login(request):
     }
     response = requests.post('https://api.intra.42.fr/oauth/token', data=data)
 
+    data = response.json()
     if response.status_code != 200:
         return Response(status=response.status_code, data=response.json())
     else:
-        token = jwt.encode(response.json(), client_secret, algorithm='HS256')
-        return Response({'token': token})
+        data = response.json()
+        data['login'] = requests.get(
+            'https://api.intra.42.fr/v2/me', headers={'Authorization': f'Bearer {data["access_token"]}'}).json()['login']
+        token = jwt.encode(data, client_secret, algorithm='HS256')
+        return Response({'token': token, 'login': data['login']})
 
 # 유저 정보!!!
 @api_view(['GET'])
 def get_my_info(request):
     try:
         token = request.GET.get('token')
-        access_token, refresh_token = decode_token(token)
+        access_token, refresh_token, login = decode_token(token)
     except Exception:
         return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
 
@@ -82,7 +86,7 @@ def get_my_info(request):
 def get_locations_stats(request):
     try:
         token = request.GET.get('token')
-        access_token, refresh_token = decode_token(token)
+        access_token, refresh_token, login = decode_token(token)
     except Exception:
         return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
 
@@ -94,19 +98,19 @@ def get_locations_stats(request):
         'client_secret': client_secret})
     access_token = response.json()['access_token']
 
-    response = requests.get(f'https://api.intra.42.fr/v2/users/junkpark/locations_stats', headers={'Authorization': f'Bearer {access_token}'})
+    response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations_stats', headers={'Authorization': f'Bearer {access_token}'})
     return Response(response.json())
 
 @api_view(['GET'])
 def get_locations(request):
     try:
         token = request.GET.get('token')
-        access_token, refresh_token = decode_token(token)
+        access_token, refresh_token, login = decode_token(token)
     except Exception:
         return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
 
     # API 요청
-    response = requests.get('https://api.intra.42.fr/v2/users/junkpark/locations', headers={'Authorization': f'Bearer {access_token}'})
+    response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'})
 
     # 만약 response.status_code가 200이 아니면, access_token이 만료되었을 것임.
     if response.status_code != 200:
@@ -114,7 +118,7 @@ def get_locations(request):
 
         if new_token:
             access_token = new_token['access_token']
-            data = requests.get('https://api.intra.42.fr/v2/users/junkpark/locations', headers={'Authorization': f'Bearer {access_token}'}).json()
+            data = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'}).json()
             data['token'] = jwt.encode(new_token, os.getenv('CLIENT_SECRET'), algorithm='HS256')
             return Response(status=200, data=data)
         else:
