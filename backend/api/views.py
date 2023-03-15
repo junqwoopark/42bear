@@ -125,3 +125,4 @@ def get_locations(request):
 @api_view(['GET'])
 def get_bears_user_info(request):
     intra_id = request.GET.get('id', None)
+    return Response(get_user(intra_id))
