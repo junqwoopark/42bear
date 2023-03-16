@@ -1,3 +1,4 @@
+import 'package:bear/screen_home.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -21,6 +22,26 @@ class FirstScreen extends StatefulWidget {
 class _FirstState extends State<FirstScreen> {
   final String authUrl =
       'https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-68cf21898612ee91cdf50db3608567d352f3098108ac6b9fc6029df42e192831&redirect_uri=bear%3A%2F%2Fcallback&response_type=code';
+  String? token = null;
+  String? login = null;
+
+  static void setData(String token, String login) async {
+    final pref = await SharedPreferences.getInstance();
+    await pref.setString('token', token);
+    await pref.setString('login', login);
+  }
+
+  void getData() async {
+    try {
+      final pref = await SharedPreferences.getInstance();
+      setState(() {
+        token = pref.getString('token');
+        login = pref.getString('login');
+      });
+    } catch (e) {
+      debugPrint('Foo');
+    }
+  }
 
   Future<void> _login() async {
     if (await canLaunchUrlString(authUrl)) {
@@ -35,15 +56,20 @@ class _FirstState extends State<FirstScreen> {
         final jsonResponse = json.decode(response.body);
         final token = jsonResponse['token'];
         final login = jsonResponse['login'];
-        final SharedPreferences pref = await SharedPreferences.getInstance();
-        pref.setString('token', token);
-        pref.setString('login', login);
+        setData(token, login);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    getData();
+    if (token != null) {
+      return MaterialApp(
+        home: SecondScreen(),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -65,7 +91,15 @@ class _FirstState extends State<FirstScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton(
-                onPressed: _login,
+                onPressed: () {
+                  _login();
+                  if (token != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SecondScreen()),
+                    );
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                     fixedSize: const Size(200, 75),
                     side: const BorderSide(),
@@ -74,7 +108,7 @@ class _FirstState extends State<FirstScreen> {
                     ),
                     backgroundColor: Colors.black),
                 child: const Text(
-                  "sign up",
+                  "Login",
                   style: TextStyle(
                     fontFamily: 'futura',
                     fontSize: 30,

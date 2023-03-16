@@ -1,12 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:bear/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import 'package:percent_indicator/percent_indicator.dart';
 
-class HomeScreen extends StatefulWidget {
+class SecondScreen extends StatefulWidget {
   @override
-  HomeScreenState createState() => HomeScreenState();
+  SecondScreenState createState() => SecondScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class SecondScreenState extends State<SecondScreen> {
+  String? token = null;
+  String? login = null;
+
+  void getData() async {
+    try {
+      final pref = await SharedPreferences.getInstance();
+      setState(() {
+        token = pref.getString('token');
+        login = pref.getString('login');
+      });
+    } catch (e) {
+      debugPrint('Foo');
+    }
+  }
+
+  static void removeData() async {
+    final pref = await SharedPreferences.getInstance();
+    pref.remove('token');
+    pref.remove('login');
+  }
+
   @override
   Widget build(BuildContext context) {
     // 기기의 상태 정보 확인
@@ -14,8 +38,10 @@ class HomeScreenState extends State<HomeScreen> {
     double width = screenSize.width;
     double height = screenSize.height;
     var time = '10h 42m';
+    getData();
 
-    return SafeArea(
+    return WillPopScope(
+      onWillPop: () async => false,
       child: Scaffold(
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -23,7 +49,7 @@ class HomeScreenState extends State<HomeScreen> {
           children: <Widget>[
             Center(
               child: Image.asset(
-                'images/logo.png',
+                'assets/images/logo.png',
                 width: width * 0.8,
               ),
             ),
@@ -51,7 +77,7 @@ class HomeScreenState extends State<HomeScreen> {
                   Column(
                     children: [
                       Image.asset(
-                        'images/bear.png',
+                        'assets/images/bear.png',
                         width: width * 0.6,
                       ),
                     ],
@@ -64,7 +90,7 @@ class HomeScreenState extends State<HomeScreen> {
                         height: 90,
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: AssetImage('images/borntoberoot.png'),
+                            image: AssetImage('assets/images/borntoberoot.png'),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -76,7 +102,7 @@ class HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: height * 0.02),
             Text(
-              'pollabear',
+              login ?? 'anonymous',
               style: TextStyle(
                   fontSize: 20,
                   fontFamily: 'futura',
@@ -95,7 +121,7 @@ class HomeScreenState extends State<HomeScreen> {
                           get_help_dialog(context),
                     );
                   },
-                  child: Image.asset('images/help.png'),
+                  child: Image.asset('assets/images/help.png'),
                 ),
                 SizedBox(width: width * 0.1),
                 InkWell(
@@ -106,7 +132,7 @@ class HomeScreenState extends State<HomeScreen> {
                           get_help_dialog(context),
                     );
                   },
-                  child: Image.asset('images/achievements.png'),
+                  child: Image.asset('assets/images/achievements.png'),
                 ),
                 SizedBox(width: width * 0.1),
                 InkWell(
@@ -117,7 +143,7 @@ class HomeScreenState extends State<HomeScreen> {
                           get_setting_dialog(context),
                     );
                   },
-                  child: Image.asset('images/setting.png'),
+                  child: Image.asset('assets/images/setting.png'),
                 )
               ],
             )
@@ -126,71 +152,73 @@ class HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
 
-Widget get_help_dialog(BuildContext context) {
-  return AlertDialog(
-    title: const Text('Help🐻‍❄️'),
-    backgroundColor: Colors.black,
-    titleTextStyle:
-        TextStyle(color: Colors.white, fontSize: 25, fontFamily: 'futura'),
-    contentTextStyle: TextStyle(
-        color: Colors.white,
-        fontFamily: 'dosgothic',
-        fontWeight: FontWeight.bold),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-            '여러분들의 폴라ㅂ... 아니 곰을 키워보세요!\n42bear는 여러분들의 인트라 접속 시간에 따라 곰을 성장시킬 수 있습니다.\n곰을 키우면서 여러분들의 인트라 접속 시간을 늘려보세요!\n\n다양한 어플 내 업적을 통해 곰의 아바타를 변경할 수 있습니다.\n또한 본인의 과제 업적에 따라 원하는 펫을 장착할 수 있습니다.'),
-      ],
-    ),
-    actions: <Widget>[
-      TextButton(
-        onPressed: () {
-          Navigator.of(context).pop();
-        },
-        child: const Text('Close'),
+  Widget get_help_dialog(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Help🐻‍❄️'),
+      backgroundColor: Colors.black,
+      titleTextStyle:
+          TextStyle(color: Colors.white, fontSize: 25, fontFamily: 'futura'),
+      contentTextStyle: TextStyle(
+          color: Colors.white,
+          fontFamily: 'dosgothic',
+          fontWeight: FontWeight.bold),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+              '여러분들의 폴라ㅂ... 아니 곰을 키워보세요!\n42bear는 여러분들의 인트라 접속 시간에 따라 곰을 성장시킬 수 있습니다.\n곰을 키우면서 여러분들의 인트라 접속 시간을 늘려보세요!\n\n다양한 어플 내 업적을 통해 곰의 아바타를 변경할 수 있습니다.\n또한 본인의 과제 업적에 따라 원하는 펫을 장착할 수 있습니다.'),
+        ],
       ),
-    ],
-  );
-}
-
-Widget get_setting_dialog(BuildContext context) {
-  return AlertDialog(
-    title: const Text('Setting🐻‍❄️'),
-    backgroundColor: Colors.black,
-    titleTextStyle:
-        TextStyle(color: Colors.white, fontSize: 25, fontFamily: 'futura'),
-    contentTextStyle: TextStyle(
-        color: Colors.white,
-        fontFamily: 'dosgothic',
-        fontWeight: FontWeight.bold),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        Text('42bear v1 2023\n다음 업데이트를 기대해주세요!\n에러 문의는 ... [더보기]\n'),
+      actions: <Widget>[
         TextButton(
           onPressed: () {
-            // add code to handle logout here
+            Navigator.of(context).pop();
           },
-          style: TextButton.styleFrom(backgroundColor: Colors.white),
-          // ignore: prefer_const_constructors
-          child: Text('Logout', style: TextStyle(color: Colors.black)),
+          child: const Text('Close'),
         ),
-        Text('\n제작 : junkpark, hujeong, subcho'),
       ],
-    ),
-    actions: <Widget>[
-      TextButton(
-        onPressed: () {
-          Navigator.of(context).pop();
-        },
-        child: const Text('Close'),
+    );
+  }
+
+  Widget get_setting_dialog(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Setting🐻‍❄️'),
+      backgroundColor: Colors.black,
+      titleTextStyle:
+          TextStyle(color: Colors.white, fontSize: 25, fontFamily: 'futura'),
+      contentTextStyle: TextStyle(
+          color: Colors.white,
+          fontFamily: 'dosgothic',
+          fontWeight: FontWeight.bold),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Text('42bear v1 2023\n다음 업데이트를 기대해주세요!\n에러 문의는 ... [더보기]\n'),
+          TextButton(
+            onPressed: () {
+              removeData();
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => FirstScreen()));
+            },
+            style: TextButton.styleFrom(backgroundColor: Colors.white),
+            // ignore: prefer_const_constructors
+            child: Text('Logout', style: TextStyle(color: Colors.black)),
+          ),
+          Text('\n제작 : junkpark, hujeong, subcho'),
+        ],
       ),
-    ],
-  );
+      actions: <Widget>[
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
 }
