@@ -1,6 +1,8 @@
 import requests
 import os
 import jwt
+from datetime import datetime, timedelta
+import dateutil.parser
 
 from dotenv import load_dotenv
 from .my_db import add_user, get_user
@@ -124,9 +126,93 @@ def get_locations(request):
         else:
             return Response(status=501, data={'error': 'access_token 갱신 실패', 'message': '로그인을 다시 해주세요.'})
     else:
-        return Response(status=response.status_code, data=response.json())
+        time = get_today_intra_time(response.json())
+        return Response(status=response.status_code, data=str(time))
 
 @api_view(['GET'])
 def get_bears_user_info(request):
     intra_id = request.GET.get('id', None)
     return Response(get_user(intra_id))
+
+@api_view(['GET'])
+def get_locations_stats(request):
+    try:
+        token = request.GET.get('token')
+        access_token, refresh_token, login = decode_token(token)
+    except Exception:
+        return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
+
+    client_id = os.getenv('CLIENT_ID')
+    client_secret = os.getenv('CLIENT_SECRET')
+    response  = requests.post("https://api.intra.42.fr/oauth/token", data={
+        'grant_type': 'client_credentials',
+        'client_id': client_id,
+        'client_secret': client_secret})
+    access_token = response.json()['access_token']
+
+    response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations_stats', headers={'Authorization': f'Bearer {access_token}'})
+    return Response(response.json())
+
+@api_view(['GET'])
+def get_user_status(request):
+    try:
+        token = request.GET.get('token')
+        access_token, refresh_token, login = decode_token(token)
+    except Exception:
+        return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
+
+    # API 요청
+    response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'})
+
+    # 만약 response.status_code가 200이 아니면, access_token이 만료되었을 것임.
+    if response.status_code != 200:
+        new_token = get_new_token(refresh_token)
+
+        if new_token:
+            access_token = new_token['access_token']
+            data = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'}).json()
+            data['token'] = jwt.encode(new_token, os.getenv('CLIENT_SECRET'), algorithm='HS256')
+            return Response(status=200, data=data)
+        else:
+            return Response(status=501, data={'error': 'access_token 갱신 실패', 'message': '로그인을 다시 해주세요.'})
+    else:
+        status = False
+        if response.json()[0]['end_at'] == None:
+            status = True
+        return Response(status=response.status_code, data={'status': status})
+
+
+def get_today_intra_time(locations):
+    i = 0
+    get_items = locations
+    # seoul 시간 가져와줘
+    today = datetime.now()
+    time = datetime(today.date().year, today.date().month, today.date().day)
+    total_time = time
+
+    while 1:
+        end_time = get_items[i]['end_at']
+        begin_time = dateutil.parser.isoparse(get_items[i]['begin_at']).replace(tzinfo=None) + timedelta(hours=9)
+        if end_time == None:
+            # 현재 자리에 있음!
+            # begin_at이 오늘 날짜일 경우 더해주고 i++
+            if begin_time.date() == today.date():
+                total_time += (today - begin_time)
+            # begin_at이 어제일 경우 현재 시간 더해주고 break
+            elif begin_time.date() == today.date() - timedelta(days = 1):
+                total_time += today.time()
+                break
+        else:
+            end_time = dateutil.parser.isoparse(get_items[i]['end_at']).replace(tzinfo=None) + timedelta(hours=9)
+            if end_time.date() != today.date():
+                # end_time이 오늘 날짜가 아니면 break
+                break
+            else:
+                if begin_time.date() == today.date() - timedelta(days = 1):
+                    total_time += (end_time - time)
+                    break
+                else:
+                    total_time += (end_time - begin_time)
+        i += 1
+    return (total_time - time)
+
