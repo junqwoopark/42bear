@@ -10,6 +10,8 @@ from .my_db import add_user, get_user
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework.renderers import JSONRenderer
+from rest_framework.decorators import renderer_classes
 
 load_dotenv()
 
@@ -32,6 +34,7 @@ def get_new_token(refresh_token):
 
 # Create your views here.
 @api_view(['GET'])
+@renderer_classes([JSONRenderer])
 def login(request):
     code = request.GET.get('code')
 
@@ -44,10 +47,10 @@ def login(request):
         'client_id': client_id,
         'client_secret': client_secret,
         'code': code,
-        'redirect_uri': 'http://localhost:8000/api/login/',
+        'redirect_uri': 'bear://callback',
     }
     response = requests.post('https://api.intra.42.fr/oauth/token', data=data)
-
+    print("HERE", response.json())
     data = response.json()
     if response.status_code != 200:
         return Response(status=response.status_code, data=response.json())
