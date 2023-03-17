@@ -1,10 +1,15 @@
 import firebase_admin
 from firebase_admin import credentials
+import os
 from firebase_admin import db
 
 db_url = 'https://bear-79eaf-default-rtdb.firebaseio.com/'
 
-cred = credentials.Certificate("api/bear_admin.json")
+if __name__ != '__main__':
+    cred = credentials.Certificate("api/bear_admin.json")
+else:
+    path = os.path.join(os.path.dirname(__file__), 'bear_admin.json')
+    cred = credentials.Certificate(path)
 firebase_admin.initialize_app(cred, {
     'databaseURL' : db_url
 })
@@ -24,27 +29,17 @@ def get_user(intra_id):
         return (add_user(intra_id))
     return (user_info.get())
 
-def update_time(intra_id, target_time):
+def update_user(intra_id,  avatar = None, target_time = None,pet = None):
     dir = db.reference()
     user_info = dir.child('User').child(intra_id)
-    user_info.update({'target_time' : target_time})
-    return (user_info.get())
-
-def update_avatar(intra_id, avatar):
-    dir = db.reference()
-    user_info = dir.child('User').child(intra_id)
-    user_info.update({'avatar' : avatar})
-    return (user_info.get())
-
-def update_pet(intra_id, pet):
-    dir = db.reference()
-    user_info = dir.child('User').child(intra_id)
-    user_info.update({'pet' : pet})
-    return (user_info.get())
+    if target_time:
+        user_info.update({'target_time' : target_time})
+    if avatar:
+        user_info.update({'avatar' : avatar})
+    if pet:
+        user_info.update({'pet' : pet})
+    return user_info.get()
 
 
 if __name__ == '__main__':
-    update_avatar('junkpark', 'gunbear')
-    print(get_user('junkpark'))
-    # update_user('junkpark', 100)
-    # print(get_user('junkpark'))
+    print(get_user('subcho'))

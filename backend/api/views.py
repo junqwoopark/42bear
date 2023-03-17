@@ -2,10 +2,11 @@ import requests
 import os
 import jwt
 from datetime import datetime, timedelta
+import json
 import dateutil.parser
 
 from dotenv import load_dotenv
-from .my_db import add_user, get_user
+from .my_db import add_user, get_user, update_user
 
 from django.shortcuts import render
 from rest_framework.response import Response
@@ -19,7 +20,7 @@ def decode_token(token):
     decoded = jwt.decode(token, os.getenv('CLIENT_SECRET'), algorithms=['HS256'])
     return decoded['access_token'], decoded['refresh_token'], decoded['login']
 
-def get_new_token(refresh_token):
+def get_new_token(refresh_token, login):
     data = {
         'grant_type': 'refresh_token',
         'client_id': os.getenv('CLIENT_ID'),
@@ -27,14 +28,15 @@ def get_new_token(refresh_token):
         'refresh_token': refresh_token,
     }
     response = requests.post('https://api.intra.42.fr/oauth/token', data=data)
+    data = response.json()
+    data['login'] = login
     if response.status_code == 200:
-        return response.json()
+        return data
     else:
         return None
 
 # Create your views here.
 @api_view(['GET'])
-@renderer_classes([JSONRenderer])
 def login(request):
     code = request.GET.get('code')
 
@@ -49,6 +51,7 @@ def login(request):
         'code': code,
         'redirect_uri': 'bear://callback',
     }
+    print(code)
     response = requests.post('https://api.intra.42.fr/oauth/token', data=data)
     print("HERE", response.json())
     data = response.json()
@@ -81,7 +84,7 @@ def get_my_info(request):
             access_token = new_token['access_token']
             data = requests.get('https://api.intra.42.fr/v2/me', headers={'Authorization': f'Bearer {access_token}'}).json()
             data['token'] = jwt.encode(new_token, os.getenv('CLIENT_SECRET'), algorithm='HS256')
-            return Response(status=200, data=data)
+            return Response(status=201, data=data)
         else:
             return Response(status=501, data={'error': 'access_token 갱신 실패', 'message': '로그인을 다시 해주세요.'})
     else:
@@ -107,35 +110,70 @@ def get_locations_stats(request):
     return Response(response.json())
 
 @api_view(['GET'])
-def get_locations(request):
+def get_user_time(request):
     try:
         token = request.GET.get('token')
         access_token, refresh_token, login = decode_token(token)
+        print(access_token, refresh_token, login)
     except Exception:
         return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
 
     # API 요청
     response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'})
-
-    # 만약 response.status_code가 200이 아니면, access_token이 만료되었을 것임.
     if response.status_code != 200:
-        new_token = get_new_token(refresh_token)
+        new_token = get_new_token(refresh_token, login)
 
         if new_token:
             access_token = new_token['access_token']
-            data = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'}).json()
-            data['token'] = jwt.encode(new_token, os.getenv('CLIENT_SECRET'), algorithm='HS256')
-            return Response(status=200, data=data)
+            response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'})
+            time = get_today_intra_time(response.json())
+
+            token = jwt.encode(new_token, os.getenv('CLIENT_SECRET'), algorithm='HS256')
+            return Response(status=201, data={'time': str(time), 'second': time.seconds , 'token': token})
         else:
             return Response(status=501, data={'error': 'access_token 갱신 실패', 'message': '로그인을 다시 해주세요.'})
     else:
         time = get_today_intra_time(response.json())
-        return Response(status=response.status_code, data=str(time))
+        return Response(status=200, data={'time': str(time), 'second': time.seconds})
 
-@api_view(['GET'])
+@api_view(['GET', 'PATCH'])
 def get_bears_user_info(request):
-    intra_id = request.GET.get('id', None)
-    return Response(get_user(intra_id))
+    try:
+        token = request.GET.get('token')
+        access_token, refresh_token, login = decode_token(token)
+    except Exception:
+        return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
+    if (request.method == 'GET'):
+        print("GETTTTTTTTTTTTTTT")
+        return Response(status=200, data=get_user(login))
+    elif request.method == 'PATCH':
+        data = json.loads(request.body.decode('utf-8'))
+
+        login = data.get('login', None)
+        avatar = data.get('avatar', None)
+        target_time = data.get('target_time', None)
+        pet = data.get('pet', None)
+        # print type(login), type(avatar), type(target_time), type(pet)
+        print(type(login), type(avatar), type(target_time), type(pet))
+        print(login, avatar, target_time, pet)
+        update_user(login, avatar, target_time, pet)
+        return Response(status=200, data=get_user(login))
+
+# @api_view(['FETCH'])
+# def get_bears_user_info(request):
+#     print("fetch_bears_user_info")
+#     try:
+#         token = request.GET.get('token')
+#         access_token, refresh_token, login = decode_token(token)
+#     except Exception:
+#         return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
+#     # body에서 login, avartar, target_time, pet 가져 오기
+#     login = request.data['login']
+#     avatar = request.data['avatar']
+#     target_time = request.data['target_time']
+#     pet = request.data['pet']
+#     update_user(login, avatar, target_time, pet)
+#     return Response(status=200, data={get_user(login)})
 
 @api_view(['GET'])
 def get_locations_stats(request):
