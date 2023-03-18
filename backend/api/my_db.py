@@ -17,7 +17,7 @@ firebase_admin.initialize_app(cred, {
 def add_user(intra_id):
     user_info = db.reference('User/'+intra_id) #기본 위치 지정
     user_info.set({'intra_id': intra_id,
-                   'target_time' : 0,
+                   'target_time' : 1,
                    'avatar' : 'polar',
                    'pet' : 'default'})
     return (user_info.get())
