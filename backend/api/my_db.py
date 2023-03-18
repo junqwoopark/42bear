@@ -16,16 +16,16 @@ firebase_admin.initialize_app(cred, {
 
 def add_user(intra_id):
     user_info = db.reference('User/'+intra_id) #기본 위치 지정
-    user_info.update({'intra_id' : intra_id})
-    user_info.update({'target_time' : 0})
-    user_info.update({'avatar' : 0})
-    user_info.update({'pet': 0})
+    user_info.set({'intra_id': intra_id,
+                   'target_time' : 0,
+                   'avatar' : 'polar',
+                   'pet' : 'default'})
     return (user_info.get())
 
 def get_user(intra_id):
     dir = db.reference()
     user_info = dir.child('User').child(intra_id)
-    if user_info.get() is None: #user 정보가 없을 경우 생성
+    if user_info.get() is None:
         return (add_user(intra_id))
     return (user_info.get())
 

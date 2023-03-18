@@ -51,9 +51,7 @@ def login(request):
         'code': code,
         'redirect_uri': 'bear://callback',
     }
-    print(code)
     response = requests.post('https://api.intra.42.fr/oauth/token', data=data)
-    print("HERE", response.json())
     data = response.json()
     if response.status_code != 200:
         return Response(status=response.status_code, data=response.json())
@@ -91,30 +89,10 @@ def get_my_info(request):
         return Response(status=response.status_code, data=response.json())
 
 @api_view(['GET'])
-def get_locations_stats(request):
-    try:
-        token = request.GET.get('token')
-        access_token, refresh_token, login = decode_token(token)
-    except Exception:
-        return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
-
-    client_id = os.getenv('CLIENT_ID')
-    client_secret = os.getenv('CLIENT_SECRET')
-    response  = requests.post("https://api.intra.42.fr/oauth/token", data={
-        'grant_type': 'client_credentials',
-        'client_id': client_id,
-        'client_secret': client_secret})
-    access_token = response.json()['access_token']
-
-    response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations_stats', headers={'Authorization': f'Bearer {access_token}'})
-    return Response(response.json())
-
-@api_view(['GET'])
 def get_user_time(request):
     try:
         token = request.GET.get('token')
         access_token, refresh_token, login = decode_token(token)
-        print(access_token, refresh_token, login)
     except Exception:
         return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
 
@@ -138,14 +116,17 @@ def get_user_time(request):
 
 @api_view(['GET', 'PATCH'])
 def get_bears_user_info(request):
+    def decode_token_error_response(): return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
+    def get_user_response(login): return Response(status=200, data=get_user(login))
+
     try:
         token = request.GET.get('token')
         access_token, refresh_token, login = decode_token(token)
     except Exception:
-        return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
-    if (request.method == 'GET'):
-        print("GETTTTTTTTTTTTTTT")
-        return Response(status=200, data=get_user(login))
+        return decode_token_error_response()
+
+    if request.method == 'GET':
+        return get_user_response(login)
     elif request.method == 'PATCH':
         data = json.loads(request.body.decode('utf-8'))
 
@@ -153,74 +134,11 @@ def get_bears_user_info(request):
         avatar = data.get('avatar', None)
         target_time = data.get('target_time', None)
         pet = data.get('pet', None)
-        # print type(login), type(avatar), type(target_time), type(pet)
-        print(type(login), type(avatar), type(target_time), type(pet))
+
         print(login, avatar, target_time, pet)
+
         update_user(login, avatar, target_time, pet)
-        return Response(status=200, data=get_user(login))
-
-# @api_view(['FETCH'])
-# def get_bears_user_info(request):
-#     print("fetch_bears_user_info")
-#     try:
-#         token = request.GET.get('token')
-#         access_token, refresh_token, login = decode_token(token)
-#     except Exception:
-#         return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
-#     # body에서 login, avartar, target_time, pet 가져 오기
-#     login = request.data['login']
-#     avatar = request.data['avatar']
-#     target_time = request.data['target_time']
-#     pet = request.data['pet']
-#     update_user(login, avatar, target_time, pet)
-#     return Response(status=200, data={get_user(login)})
-
-@api_view(['GET'])
-def get_locations_stats(request):
-    try:
-        token = request.GET.get('token')
-        access_token, refresh_token, login = decode_token(token)
-    except Exception:
-        return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
-
-    client_id = os.getenv('CLIENT_ID')
-    client_secret = os.getenv('CLIENT_SECRET')
-    response  = requests.post("https://api.intra.42.fr/oauth/token", data={
-        'grant_type': 'client_credentials',
-        'client_id': client_id,
-        'client_secret': client_secret})
-    access_token = response.json()['access_token']
-
-    response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations_stats', headers={'Authorization': f'Bearer {access_token}'})
-    return Response(response.json())
-
-@api_view(['GET'])
-def get_user_status(request):
-    try:
-        token = request.GET.get('token')
-        access_token, refresh_token, login = decode_token(token)
-    except Exception:
-        return Response(status=401, data={'error': 'decode_token error.', 'message': '토큰이 잘못되었습니다.'})
-
-    # API 요청
-    response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'})
-
-    # 만약 response.status_code가 200이 아니면, access_token이 만료되었을 것임.
-    if response.status_code != 200:
-        new_token = get_new_token(refresh_token)
-
-        if new_token:
-            access_token = new_token['access_token']
-            data = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'}).json()
-            data['token'] = jwt.encode(new_token, os.getenv('CLIENT_SECRET'), algorithm='HS256')
-            return Response(status=200, data=data)
-        else:
-            return Response(status=501, data={'error': 'access_token 갱신 실패', 'message': '로그인을 다시 해주세요.'})
-    else:
-        status = False
-        if response.json()[0]['end_at'] == None:
-            status = True
-        return Response(status=response.status_code, data={'status': status})
+        return get_user_response(login)
 
 
 def get_today_intra_time(locations):
