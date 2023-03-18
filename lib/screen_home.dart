@@ -127,6 +127,14 @@ class SecondScreenState extends State<SecondScreen> {
     return base_url + '/static/images/$avatar.png';
   }
 
+  Future<void> _set_target_time(target_time) async {
+    final pref = await SharedPreferences.getInstance();
+
+    setState(() {
+      pref.setInt('target_time', target_time);
+    });
+  }
+
   String getPetImageLink(String? pet) {
     pet ??= 'default';
     if (pet == 'default')
@@ -155,7 +163,9 @@ class SecondScreenState extends State<SecondScreen> {
       onConfirm: (Picker picker, List value) {
         setState(() {
           target_time = picker.getSelectedValues()[0];
-          _updateUser('login', target_time!, 'avatar', 'pet');
+          _set_target_time(target_time!);
+          _updateUser(login ?? 'anonymous', target_time!, avatar ?? 'polar',
+              pet ?? 'default');
           _get_time();
         });
       },
