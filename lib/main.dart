@@ -22,14 +22,8 @@ class FirstScreen extends StatefulWidget {
 class _FirstState extends State<FirstScreen> {
   final String authUrl =
       'https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-68cf21898612ee91cdf50db3608567d352f3098108ac6b9fc6029df42e192831&redirect_uri=bear%3A%2F%2Fcallback&response_type=code';
-  String? token = null;
-  String? login = null;
-
-  static void setData(String token, String login) async {
-    final pref = await SharedPreferences.getInstance();
-    await pref.setString('token', token);
-    await pref.setString('login', login);
-  }
+  String? token;
+  String? login;
 
   void getData() async {
     try {
@@ -50,13 +44,17 @@ class _FirstState extends State<FirstScreen> {
       final uri = Uri.parse(result);
       String? code = uri.queryParameters['code'];
       final response = await http.get(
-        Uri.parse('http://10.18.235.221:8000/api/login/?code=$code'),
+        Uri.parse('http://10.19.233.80:8000/api/login/?code=$code'),
       );
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
-        final token = jsonResponse['token'];
-        final login = jsonResponse['login'];
-        setData(token, login);
+        final pref = await SharedPreferences.getInstance();
+        setState(() {
+          pref.setString('token', jsonResponse['token']);
+          pref.setString('login', jsonResponse['login']);
+          token = pref.getString('token');
+          login = pref.getString('login');
+        });
       }
     }
   }
@@ -80,7 +78,8 @@ class _FirstState extends State<FirstScreen> {
             height: 150,
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/logo.png'),
+                image: NetworkImage(
+                    'http://10.19.233.80:8000/static/images/logo.png'),
               ),
             ),
           ),
@@ -91,8 +90,8 @@ class _FirstState extends State<FirstScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton(
-                onPressed: () {
-                  _login();
+                onPressed: () async {
+                  await _login();
                   if (token != null) {
                     Navigator.push(
                       context,

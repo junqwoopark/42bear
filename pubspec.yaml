@@ -31,6 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   percent_indicator:
+  flutter_material_pickers:
+  flutter_picker:
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -72,6 +74,7 @@ flutter:
      - assets/images/achievements.png
      - assets/images/setting.png
      - assets/images/borntoberoot.png
+     - assets/images/powerbasic.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
