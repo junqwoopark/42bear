@@ -19,31 +19,29 @@ class SecondScreen extends StatefulWidget {
 class SecondScreenState extends State<SecondScreen> {
   String? token;
   String? login;
-  String? intra_time;
+  String? intra_time = '00:00:00';
   double? intra_percent = 0.0;
-  int? target_time;
-  String? avatar;
-  String? pet;
+  int? target_time = 1;
+  String? avatar = 'polar';
+  String? pet = 'default';
 
   @override
   void initState() {
     super.initState();
+    //token login get
+    debugPrint('initState');
     _getData();
+    _get_user();
+    //_get_time();
   }
 
   final String base_url = 'http://10.19.233.80:8000';
 
   Future<void> _getData() async {
     final pref = await SharedPreferences.getInstance();
-
     setState(() {
       token = pref.getString('token');
       login = pref.getString('login');
-      intra_time = pref.getString('time');
-      target_time = pref.getInt('target_time');
-      avatar = pref.getString('avatar');
-      pet = pref.getString('pet');
-      intra_percent = pref.getDouble('intra_percent');
     });
   }
 
@@ -60,6 +58,12 @@ class SecondScreenState extends State<SecondScreen> {
     final response = await http.patch(
         Uri.parse(base_url + '/api/user/?token=$token'),
         body: jsonEncode(body));
+    if (response.statusCode == 201) {
+      setState(() {
+        pref.setString('token', jsonDecode(response.body)['token']);
+        token = pref.getString('token');
+      });
+    }
   }
 
   Future<void> _get_time() async {
@@ -68,24 +72,30 @@ class SecondScreenState extends State<SecondScreen> {
     final response = await http.get(
       Uri.parse(base_url + '/api/user/time/?token=$token'),
     );
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
+      setState(() {
+        pref.setString('token', jsonDecode(response.body)['token']);
+        token = pref.getString('token');
+      });
+    }
+    if (response.statusCode == 200 || response.statusCode == 201) {
       intra_time = jsonDecode(response.body)['time'].split('.')[0];
       var intra_sec = jsonDecode(response.body)['second'];
       double intra_sec_double = intra_sec.toDouble();
-      setState(() {
-        if (target_time == 0 || target_time == null)
-          pref.setDouble('intra_percent', 1.0);
-        else if ((intra_sec_double) >= (target_time! * 3600)) {
-          pref.setDouble('intra_percent', 1.0);
-        } else
-          pref.setDouble(
-              'intra_percent', (intra_sec_double) / (target_time! * 3600));
-        intra_percent = pref.getDouble('intra_percent');
-        pref.setString('time', intra_time!);
-      });
+      if (target_time == 0 || target_time == null)
+        pref.setDouble('intra_percent', 1.0);
+      else if ((intra_sec_double) >= (target_time! * 3600)) {
+        pref.setDouble('intra_percent', 1.0);
+      } else
+        pref.setDouble(
+            'intra_percent', (intra_sec_double) / (target_time! * 3600));
+      intra_percent = pref.getDouble('intra_percent');
+      pref.setString('time', intra_time!);
+      intra_time = pref.getString('time');
       debugPrint('Request succeeded!');
     } else {
-      debugPrint('Request failed with status: ${response.statusCode}.');
+      debugPrint(
+          'Request failed with status: ${response.statusCode}. from get time');
     }
   }
 
@@ -95,18 +105,23 @@ class SecondScreenState extends State<SecondScreen> {
     final response = await http.get(
       Uri.parse(base_url + '/api/user/?token=$token'),
     );
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       setState(() {
-        pref.setString('avatar', jsonDecode(response.body)['avatar']);
-        pref.setString('pet', jsonDecode(response.body)['pet']);
-        pref.setInt('target_time', jsonDecode(response.body)['target_time']);
-        avatar = pref.getString('avatar');
-        pet = pref.getString('pet');
-        target_time = pref.getInt('target_time');
+        pref.setString('token', jsonDecode(response.body)['token']);
+        token = pref.getString('token');
       });
+    }
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      pref.setString('avatar', jsonDecode(response.body)['avatar']);
+      pref.setString('pet', jsonDecode(response.body)['pet']);
+      pref.setInt('target_time', jsonDecode(response.body)['target_time']);
+      avatar = pref.getString('avatar');
+      pet = pref.getString('pet');
+      target_time = pref.getInt('target_time');
       debugPrint('Request succeeded!');
     } else {
-      debugPrint('Request failed with status: ${response.statusCode}.');
+      debugPrint(
+          'Request failed with status: ${response.statusCode}. from get user');
     }
   }
 
@@ -114,6 +129,11 @@ class SecondScreenState extends State<SecondScreen> {
     final pref = await SharedPreferences.getInstance();
     pref.remove('token');
     pref.remove('login');
+    pref.remove('time');
+    pref.remove('target_time');
+    pref.remove('intra_percent');
+    pref.remove('avatar');
+    pref.remove('pet');
   }
 
   String? getAvatarImageLink(String? avatar) {

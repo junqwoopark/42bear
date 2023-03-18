@@ -52,6 +52,7 @@ class _FirstState extends State<FirstScreen> {
         setState(() {
           pref.setString('token', jsonResponse['token']);
           pref.setString('login', jsonResponse['login']);
+
           token = pref.getString('token');
           login = pref.getString('login');
         });
