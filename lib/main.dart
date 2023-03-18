@@ -40,7 +40,7 @@ class _FirstState extends State<FirstScreen> {
   Future<void> _login() async {
     if (await canLaunchUrlString(authUrl)) {
       final result = await FlutterWebAuth.authenticate(
-          url: authUrl, callbackUrlScheme: 'bear');
+          url: authUrl, callbackUrlScheme: 'bear', preferEphemeral: true);
       final uri = Uri.parse(result);
       String? code = uri.queryParameters['code'];
       final response = await http.get(
