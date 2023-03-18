@@ -99,6 +99,9 @@ def get_user_time(request):
     # API 요청
     response = requests.get(f'https://api.intra.42.fr/v2/users/{login}/locations', headers={'Authorization': f'Bearer {access_token}'})
     if response.status_code != 200:
+        print("ERROR")
+        print(response)
+        print("ERROR")
         new_token = get_new_token(refresh_token, login)
 
         if new_token:
