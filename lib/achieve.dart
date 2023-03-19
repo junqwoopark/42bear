@@ -118,6 +118,10 @@ class _AchieveScreenState extends State<AchieveScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Size screenSize = MediaQuery.of(context).size;
+    final double width = screenSize.width;
+    final double height = screenSize.height;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -151,7 +155,7 @@ class _AchieveScreenState extends State<AchieveScreen> {
               ),
             ),
             onPressed: () {
-              _updateUser(login!, target_time!, avatar, pet);
+              _updateUser(login!, target_time, avatar, pet);
               Navigator.pop(context, avatar);
             },
             child: Column(
@@ -177,7 +181,7 @@ class _AchieveScreenState extends State<AchieveScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: EdgeInsets.only(bottom: height * 0.01),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -185,19 +189,20 @@ class _AchieveScreenState extends State<AchieveScreen> {
                   style: ButtonStyle(
                     overlayColor: MaterialStateProperty.all(
                         Color.fromARGB(255, 246, 195, 75)),
-                    fixedSize: MaterialStatePropertyAll(Size(200, 220)),
+                    fixedSize: MaterialStatePropertyAll(
+                        Size(width * 0.4, height * 0.25)),
                     side: MaterialStateProperty.all(borderSideGun),
                   ),
                   onPressed: onPressedGun,
                   child: Column(
                     children: [
                       SizedBox(
-                        height: 20,
+                        height: height * 0.05,
                       ),
                       Image.network(
                         baseUrl + '/static/images/gun.png',
-                        width: 140,
-                        height: 160,
+                        width: width * 0.35,
+                        height: height * 0.15,
                       ),
                       const Text(
                         "건곰",
@@ -216,17 +221,18 @@ class _AchieveScreenState extends State<AchieveScreen> {
                   style: ButtonStyle(
                     overlayColor: MaterialStateProperty.all(
                         Color.fromARGB(255, 103, 157, 125)),
-                    fixedSize: MaterialStatePropertyAll(Size(200, 220)),
+                    fixedSize: MaterialStatePropertyAll(
+                        Size(width * 0.4, height * 0.25)),
                     side: MaterialStateProperty.all(borderSideGon),
                   ),
                   onPressed: onPressedGon,
                   child: Column(
                     children: [
-                      SizedBox(height: 20),
+                      SizedBox(height: height * 0.05),
                       Image.network(
                         baseUrl + '/static/images/gon.png',
-                        width: 140,
-                        height: 160,
+                        width: width * 0.35,
+                        height: height * 0.15,
                       ),
                       const Text(
                         "곤곰",
@@ -245,7 +251,7 @@ class _AchieveScreenState extends State<AchieveScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: EdgeInsets.only(bottom: height * 0.01),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -253,19 +259,20 @@ class _AchieveScreenState extends State<AchieveScreen> {
                   style: ButtonStyle(
                     overlayColor: MaterialStateProperty.all(
                         Color.fromARGB(255, 88, 130, 161)),
-                    fixedSize: MaterialStatePropertyAll(Size(200, 220)),
+                    fixedSize: MaterialStatePropertyAll(
+                        Size(width * 0.4, height * 0.25)),
                     side: MaterialStateProperty.all(borderSideGam),
                   ),
                   onPressed: onPressedGam,
                   child: Column(
                     children: [
                       SizedBox(
-                        height: 20,
+                        height: height * 0.05,
                       ),
                       Image.network(
                         baseUrl + '/static/images/gam.png',
-                        width: 140,
-                        height: 160,
+                        width: width * 0.35,
+                        height: height * 0.15,
                       ),
                       const Text(
                         "감곰",
@@ -284,19 +291,20 @@ class _AchieveScreenState extends State<AchieveScreen> {
                   style: ButtonStyle(
                     overlayColor: MaterialStateProperty.all(
                         Color.fromARGB(255, 173, 74, 69)),
-                    fixedSize: MaterialStatePropertyAll(Size(200, 220)),
+                    fixedSize: MaterialStatePropertyAll(
+                        Size(width * 0.4, height * 0.25)),
                     side: MaterialStateProperty.all(borderSideLee),
                   ),
                   onPressed: onPressedLee,
                   child: Column(
                     children: [
                       SizedBox(
-                        height: 20,
+                        height: height * 0.05,
                       ),
                       Image.network(
                         baseUrl + '/static/images/lee.png',
-                        width: 140,
-                        height: 160,
+                        width: width * 0.35,
+                        height: height * 0.15,
                       ),
                       const Text(
                         "리곰",
@@ -315,7 +323,7 @@ class _AchieveScreenState extends State<AchieveScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: EdgeInsets.only(bottom: height * 0.01),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -323,19 +331,20 @@ class _AchieveScreenState extends State<AchieveScreen> {
                   style: ButtonStyle(
                     overlayColor: MaterialStateProperty.all(
                         Color.fromARGB(255, 181, 179, 179)),
-                    fixedSize: MaterialStatePropertyAll(Size(200, 220)),
+                    fixedSize: MaterialStatePropertyAll(
+                        Size(width * 0.4, height * 0.25)),
                     side: MaterialStateProperty.all(borderSideClassic),
                   ),
                   onPressed: onPressedClassic,
                   child: Column(
                     children: [
                       SizedBox(
-                        height: 20,
+                        height: height * 0.05,
                       ),
                       Image.network(
                         baseUrl + '/static/images/polar.png',
-                        width: 140,
-                        height: 160,
+                        width: width * 0.35,
+                        height: height * 0.15,
                       ),
                       const Text(
                         "폴라",
@@ -354,7 +363,8 @@ class _AchieveScreenState extends State<AchieveScreen> {
                   style: ButtonStyle(
                     overlayColor: MaterialStateProperty.all(
                         Color.fromARGB(255, 181, 179, 179)),
-                    fixedSize: MaterialStatePropertyAll(Size(200, 220)),
+                    fixedSize: MaterialStatePropertyAll(
+                        Size(width * 0.4, height * 0.25)),
                     side: MaterialStatePropertyAll(
                       BorderSide(
                         color: Colors.white,
@@ -465,12 +475,12 @@ class _AchieveScreenState extends State<AchieveScreen> {
                   child: Column(
                     children: [
                       SizedBox(
-                        height: 20,
+                        height: height * 0.05,
                       ),
                       Image.network(
                         baseUrl + '/static/images/' + pet + '.png',
-                        width: 180,
-                        height: 180,
+                        width: width * 0.35,
+                        height: height * 0.15,
                       ),
                       const Text(
                         "펫",
@@ -479,7 +489,7 @@ class _AchieveScreenState extends State<AchieveScreen> {
                           fontSize: 30,
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
-                          height: 0.3,
+                          height: 1,
                         ),
                       ),
                     ],
