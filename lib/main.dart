@@ -44,7 +44,7 @@ class _FirstState extends State<FirstScreen> {
       final uri = Uri.parse(result);
       String? code = uri.queryParameters['code'];
       final response = await http.get(
-        Uri.parse('http://10.19.233.80:8000/api/login/?code=$code'),
+        Uri.parse('http://10.18.235.221:8000/api/login/?code=$code'),
       );
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
@@ -80,7 +80,7 @@ class _FirstState extends State<FirstScreen> {
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: NetworkImage(
-                    'http://10.19.233.80:8000/static/images/logo.png'),
+                    'http://10.18.235.221:8000/static/images/logo.png'),
               ),
             ),
           ),

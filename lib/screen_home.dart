@@ -10,6 +10,7 @@ import 'package:flutter_web_auth/flutter_web_auth.dart';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:flutter_picker/flutter_picker.dart';
+import 'achieve.dart';
 
 class SecondScreen extends StatefulWidget {
   @override
@@ -29,13 +30,13 @@ class SecondScreenState extends State<SecondScreen> {
   void initState() {
     super.initState();
     //token login get
-    debugPrint('initState');
+    //debugPrint('initState');
     _getData();
     _get_user();
     //_get_time();
   }
 
-  final String base_url = 'http://10.19.233.80:8000';
+  final String base_url = 'http://10.18.235.221:8000';
 
   Future<void> _getData() async {
     final pref = await SharedPreferences.getInstance();
@@ -351,11 +352,14 @@ class SecondScreenState extends State<SecondScreen> {
                 SizedBox(width: width * 0.1),
                 InkWell(
                   onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) =>
-                          get_help_dialog(context),
-                    );
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AchieveScreen(),
+                          fullscreenDialog: true,
+                        )).then((value) => setState(() {
+                          _get_user();
+                        }));
                   },
                   child: Image.network(
                       base_url + '/static/images/achievements.png'),
