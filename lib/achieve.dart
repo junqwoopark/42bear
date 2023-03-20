@@ -19,7 +19,7 @@ class AchieveScreen extends StatefulWidget {
 class _AchieveScreenState extends State<AchieveScreen> {
   String? token;
   String? login;
-  final baseUrl = 'http://10.18.235.221:8000';
+  final baseUrl = 'http://127.0.0.1:8000';
   String pet = 'default';
   String avatar = 'polar';
   int target_time = 1;

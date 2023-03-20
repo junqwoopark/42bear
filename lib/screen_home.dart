@@ -36,7 +36,7 @@ class SecondScreenState extends State<SecondScreen> {
     //_get_time();
   }
 
-  final String base_url = 'http://10.18.235.221:8000';
+  final String base_url = 'http://127.0.0.1:8000';
 
   Future<void> _getData() async {
     final pref = await SharedPreferences.getInstance();
@@ -90,9 +90,11 @@ class SecondScreenState extends State<SecondScreen> {
       } else
         pref.setDouble(
             'intra_percent', (intra_sec_double) / (target_time! * 3600));
+
       intra_percent = pref.getDouble('intra_percent');
       pref.setString('time', intra_time!);
       intra_time = pref.getString('time');
+
       debugPrint('Request succeeded!');
     } else {
       debugPrint(
@@ -113,6 +115,7 @@ class SecondScreenState extends State<SecondScreen> {
       });
     }
     if (response.statusCode == 200 || response.statusCode == 201) {
+      debugPrint(response.body);
       pref.setString('avatar', jsonDecode(response.body)['avatar']);
       pref.setString('pet', jsonDecode(response.body)['pet']);
       pref.setInt('target_time', jsonDecode(response.body)['target_time']);
@@ -359,6 +362,7 @@ class SecondScreenState extends State<SecondScreen> {
                           fullscreenDialog: true,
                         )).then((value) => setState(() {
                           _get_user();
+                          _get_time();
                         }));
                   },
                   child: Image.network(
